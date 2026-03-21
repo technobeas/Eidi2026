@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eidi Luxury Spin</title>
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        background:
+          radial-gradient(
+            circle at 20% 20%,
+            rgba(255, 215, 0, 0.15),
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 80%,
+            rgba(255, 140, 0, 0.12),
+            transparent 40%
+          ),
+          radial-gradient(circle at top, #1a1a2e, #0f0f1b 60%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        padding: 20px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* 🔥 Toast */
+      .toast {
+        position: fixed;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 14px 25px;
+        border-radius: 50px;
+        font-size: 14px;
+        color: #fff;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        opacity: 0;
+        transition: 0.4s;
+        z-index: 10000;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* 🔥 Effects Layer */
+      .effects {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 9999;
+        overflow: hidden;
+      }
+
+      .app {
+        backdrop-filter: blur(25px);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        padding: 40px;
+        border-radius: 35px;
+        width: 100%;
+        max-width: 520px;
+        text-align: center;
+        box-shadow: 0 0 60px rgba(255, 215, 0, 0.15);
+        position: relative;
+        z-index: 1;
+      }
+
+      h1 {
+        font-weight: 800;
+        font-size: 26px;
+        background: linear-gradient(45deg, #ffd700, #ffa500, #ffcc70);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 20px;
+      }
+
+      input {
+        width: 100%;
+        padding: 14px;
+        border-radius: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        outline: none;
+        margin-bottom: 20px;
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+        text-align: center;
+        font-size: 15px;
+      }
+
+      .wheel-container {
+        position: relative;
+        margin: 20px auto;
+        width: 300px;
+        height: 300px;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+      }
+
+      .pointer {
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-left: 16px solid transparent;
+        border-right: 16px solid transparent;
+        border-bottom: 30px solid gold;
+        filter: drop-shadow(0 0 8px gold);
+      }
+
+      button {
+        margin-top: 18px;
+        padding: 14px 35px;
+        border-radius: 50px;
+        border: none;
+        font-weight: 600;
+        font-size: 15px;
+        background: linear-gradient(145deg, #ffd700, #ff9900);
+        cursor: pointer;
+        color: black;
+        transition: 0.3s;
+      }
+
+      button:hover {
+        transform: scale(1.05);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .result-box {
+        margin-top: 25px;
+        display: none;
+      }
+
+      .amount {
+        font-size: 40px;
+        font-weight: 800;
+        color: gold;
+        margin-top: 10px;
+      }
+
+      /* 🎊 Confetti */
+      .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        top: -20px;
+        animation: fall 3s linear forwards;
+        border-radius: 2px;
+      }
+
+      /* 😢 Sad */
+      .sad {
+        position: absolute;
+        font-size: 24px;
+        top: -20px;
+        animation: fall 3s linear forwards;
+      }
+
+      @keyframes fall {
+        to {
+          transform: translateY(110vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      footer {
+        margin-top: 25px;
+        font-size: 12px;
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="toast" id="toast"></div>
+    <div class="effects" id="effects"></div>
+
+    <div class="app">
+      <h1>✨ Eidi Spin ✨</h1>
+
+      <input
+        type="text"
+        id="username"
+        placeholder="Enter your name"
+        value="Maryam"
+      />
+
+      <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="350" height="350"></canvas>
+      </div>
+
+      <button id="spinBtn" onclick="spin()">SPIN NOW</button>
+
+      <div class="result-box" id="resultBox">
+        <h2 id="resultTitle">Eid Mubarak 🎉</h2>
+        <div class="amount" id="amount"></div>
+        <p id="message"></p>
+      </div>
+
+      <footer>© Eidi 2026</footer>
+    </div>
+
+    <script>
+      window.onload = () => {
+        const input = document.getElementById("username");
+        input.value = "Maryam";
+      };
+      const prizes = [
+        "₹100",
+        "₹500",
+        "₹1000",
+        "₹10",
+        "₹50",
+        "Nothing",
+        "₹75",
+        "₹150",
+      ];
+      const colors = [
+        "#FF6B6B",
+        "#F06595",
+        "#CC5DE8",
+        "#845EF7",
+        "#5C7CFA",
+        "#339AF0",
+        "#22B8CF",
+        "#51CF66",
+      ];
+
+      const canvas = document.getElementById("wheel");
+      const ctx = canvas.getContext("2d");
+      const radius = canvas.width / 2;
+      const effects = document.getElementById("effects");
+      const toast = document.getElementById("toast");
+
+      let currentRotation = 0;
+      let spinning = false;
+      const spinBtn = document.getElementById("spinBtn");
+
+      /* 🔔 Toast Function */
+      function showToast(message) {
+        toast.innerText = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
+      }
+
+      /* 🔒 One spin per device */
+      if (localStorage.getItem("eidiPlayed")) {
+        lockSpin();
+      }
+
+      function lockSpin() {
+        spinBtn.disabled = true;
+        spinBtn.innerText = "Already Played 🎁";
+      }
+
+      function drawWheel() {
+        const arc = (2 * Math.PI) / prizes.length;
+        for (let i = 0; i < prizes.length; i++) {
+          ctx.beginPath();
+          ctx.fillStyle = colors[i];
+          ctx.moveTo(radius, radius);
+          ctx.arc(radius, radius, radius, i * arc, (i + 1) * arc);
+          ctx.fill();
+
+          ctx.save();
+          ctx.translate(radius, radius);
+          ctx.rotate(i * arc + arc / 2);
+          ctx.fillStyle = "white";
+          ctx.font = "bold 14px Poppins";
+          ctx.textAlign = "right";
+          ctx.fillText(prizes[i], radius - 15, 5);
+          ctx.restore();
+        }
+      }
+      drawWheel();
+
+      function spin() {
+        if (spinning) return;
+
+        if (localStorage.getItem("eidiPlayed")) {
+          showToast("You already claimed your Eidi 🎁");
+          return;
+        }
+
+        const name = document.getElementById("username").value.trim();
+        if (!name) {
+          showToast("Please enter name!");
+          return;
+        }
+
+        spinning = true;
+
+        const arc = 360 / prizes.length;
+        let selectedIndex;
+
+        if (name.toLowerCase() === "maryam") {
+          selectedIndex = prizes.indexOf("₹500");
+        } else {
+          selectedIndex = prizes.indexOf("₹10");
+        }
+
+        const finalAngle = 360 * 5 + (360 - selectedIndex * arc);
+        currentRotation += finalAngle;
+
+        canvas.style.transition =
+          "transform 4s cubic-bezier(0.17,0.67,0.83,0.67)";
+        canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+        setTimeout(() => {
+          showResult(name, prizes[selectedIndex]);
+          localStorage.setItem("eidiPlayed", "true");
+          lockSpin();
+          spinning = false;
+        }, 4000);
+      }
+
+      function showResult(name, prize) {
+        document.getElementById("resultBox").style.display = "block";
+        document.getElementById("amount").innerText = prize;
+
+        if (prize === "Nothing") {
+          document.getElementById("resultTitle").innerText = "Oops 😢";
+          document.getElementById("message").innerText =
+            "Better luck next time!";
+          launchSad();
+        } else {
+          document.getElementById("resultTitle").innerText = "Eid Mubarak 🎉";
+          document.getElementById("message").innerText =
+            `Congratulations ${name}!`;
+          launchConfetti();
+        }
+      }
+
+      function launchConfetti() {
+        for (let i = 0; i < 80; i++) {
+          const div = document.createElement("div");
+          div.className = "confetti";
+          div.style.left = Math.random() * 100 + "vw";
+          div.style.background = ["#FFD700", "#FF6347", "#00FFCC", "#FF69B4"][
+            Math.floor(Math.random() * 4)
+          ];
+          div.style.animationDuration = 2 + Math.random() * 2 + "s";
+          effects.appendChild(div);
+          setTimeout(() => div.remove(), 4000);
+        }
+      }
+
+      function launchSad() {
+        for (let i = 0; i < 40; i++) {
+          const div = document.createElement("div");
+          div.className = "sad";
+          div.innerText = "😢";
+          div.style.left = Math.random() * 100 + "vw";
+          div.style.animationDuration = 2 + Math.random() * 2 + "s";
+          effects.appendChild(div);
+          setTimeout(() => div.remove(), 4000);
+        }
+      }
+    </script>
+  </body>
+</html>
