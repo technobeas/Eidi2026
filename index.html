@@ -287,7 +287,7 @@
         "₹100",
         "₹500",
         "₹20",
-        "₹10",
+        "₹1000",
         "₹50",
         "Nothing",
         "₹75",
@@ -380,15 +380,7 @@
           selectedIndex = prizes.indexOf("₹500"); // only Maryam 2nd spin
         } else {
           // everyone else can only get less than 500
-          const allowed = [
-            "₹100",
-            "₹20",
-            "₹10",
-            "₹50",
-            "Nothing",
-            "₹75",
-            "₹150",
-          ];
+          const allowed = ["₹20", "₹50", "Nothing"];
           const randomPrize =
             allowed[Math.floor(Math.random() * allowed.length)];
           selectedIndex = prizes.indexOf(randomPrize);
