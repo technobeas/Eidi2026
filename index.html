@@ -38,7 +38,6 @@
         position: relative;
       }
 
-      /* 🔥 Toast */
       .toast {
         position: fixed;
         top: 30px;
@@ -60,7 +59,6 @@
         transform: translateX(-50%) translateY(0);
       }
 
-      /* 🔥 Effects Layer */
       .effects {
         position: fixed;
         inset: 0;
@@ -164,7 +162,6 @@
         margin-top: 10px;
       }
 
-      /* 🎊 Confetti */
       .confetti {
         position: absolute;
         width: 10px;
@@ -174,7 +171,6 @@
         border-radius: 2px;
       }
 
-      /* 😢 Sad */
       .sad {
         position: absolute;
         font-size: 24px;
@@ -224,18 +220,43 @@
         <p id="message"></p>
       </div>
 
+      <div
+        id="bestBox"
+        style="
+          margin-top: 20px;
+          padding: 20px;
+          border-radius: 20px;
+          background: rgba(255, 215, 0, 0.1);
+          border: 1px solid rgba(255, 215, 0, 0.3);
+          display: none;
+        "
+      >
+        <div style="font-size: 14px; opacity: 0.7">🏆 BEST OF 3</div>
+        <div
+          id="bestAmount"
+          style="
+            font-size: 48px;
+            font-weight: 800;
+            color: gold;
+            margin-top: 5px;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+          "
+        ></div>
+      </div>
+
+      <div id="history" style="margin-top: 15px; font-size: 14px"></div>
+
       <footer>© Eidi 2026</footer>
     </div>
 
     <script>
-      window.onload = () => {
-        const input = document.getElementById("username");
-        input.value = "Maryam";
-      };
+      let spinCount = parseInt(localStorage.getItem("spinCount")) || 0;
+      let results = JSON.parse(localStorage.getItem("results")) || [];
+
       const prizes = [
         "₹100",
         "₹500",
-        "₹1000",
+        "₹20",
         "₹10",
         "₹50",
         "Nothing",
@@ -263,21 +284,10 @@
       let spinning = false;
       const spinBtn = document.getElementById("spinBtn");
 
-      /* 🔔 Toast Function */
-      function showToast(message) {
-        toast.innerText = message;
+      function showToast(msg) {
+        toast.innerText = msg;
         toast.classList.add("show");
         setTimeout(() => toast.classList.remove("show"), 2500);
-      }
-
-      /* 🔒 One spin per device */
-      if (localStorage.getItem("eidiPlayed")) {
-        lockSpin();
-      }
-
-      function lockSpin() {
-        spinBtn.disabled = true;
-        spinBtn.innerText = "Already Played 🎁";
       }
 
       function drawWheel() {
@@ -301,32 +311,64 @@
       }
       drawWheel();
 
+      window.onload = () => {
+        updateHistory();
+        if (spinCount >= 3) {
+          spinBtn.disabled = true;
+          spinBtn.innerText = "Done 🎁";
+        }
+      };
+
+      function saveData() {
+        localStorage.setItem("spinCount", spinCount);
+        localStorage.setItem("results", JSON.stringify(results));
+      }
+
       function spin() {
         if (spinning) return;
-
-        if (localStorage.getItem("eidiPlayed")) {
-          showToast("You already claimed your Eidi 🎁");
+        if (spinCount >= 3) {
+          showToast("Only 3 spins allowed 🎯");
+          spinBtn.disabled = true;
+          spinBtn.innerText = "Finished 🎁";
           return;
         }
 
         const name = document.getElementById("username").value.trim();
         if (!name) {
-          showToast("Please enter name!");
+          showToast("Enter your name!");
           return;
         }
 
         spinning = true;
+        spinCount++;
 
         const arc = 360 / prizes.length;
         let selectedIndex;
 
-        if (name.toLowerCase() === "maryam") {
-          selectedIndex = prizes.indexOf("₹500");
+        // ✅ Rigged Logic
+        if (name.toLowerCase() === "maryam" && spinCount === 2) {
+          selectedIndex = prizes.indexOf("₹500"); // only Maryam 2nd spin
         } else {
-          selectedIndex = prizes.indexOf("₹10");
+          // everyone else can only get less than 500
+          const allowed = [
+            "₹100",
+            "₹20",
+            "₹10",
+            "₹50",
+            "Nothing",
+            "₹75",
+            "₹150",
+          ];
+          const randomPrize =
+            allowed[Math.floor(Math.random() * allowed.length)];
+          selectedIndex = prizes.indexOf(randomPrize);
         }
 
-        const finalAngle = 360 * 5 + (360 - selectedIndex * arc);
+        const prize = prizes[selectedIndex];
+        results.push({ spin: spinCount, prize: prize });
+        saveData();
+
+        const finalAngle = 360 * 5 + (360 - selectedIndex * arc - arc / 2);
         currentRotation += finalAngle;
 
         canvas.style.transition =
@@ -334,11 +376,46 @@
         canvas.style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(() => {
-          showResult(name, prizes[selectedIndex]);
-          localStorage.setItem("eidiPlayed", "true");
-          lockSpin();
+          showResult(name, prize);
+          updateHistory();
+          if (spinCount >= 3) {
+            spinBtn.disabled = true;
+            spinBtn.innerText = "Done 🎁";
+          }
           spinning = false;
         }, 4000);
+      }
+
+      function updateHistory() {
+        const historyDiv = document.getElementById("history");
+        const bestBox = document.getElementById("bestBox");
+        const bestAmount = document.getElementById("bestAmount");
+
+        if (results.length === 0) {
+          historyDiv.innerHTML = "";
+          bestBox.style.display = "none";
+          return;
+        }
+
+        const spinsText = results
+          .map((r) => `${r.spin} of 3: ${r.prize}`)
+          .join(" | ");
+        historyDiv.innerHTML = `<b>Spins:</b> ${spinsText}`;
+
+        const best = getBestPrize();
+        bestBox.style.display = "block";
+        bestAmount.innerText = best;
+      }
+
+      function getBestPrize() {
+        let max = 0;
+        results.forEach((r) => {
+          if (r.prize !== "Nothing") {
+            const val = parseInt(r.prize.replace("₹", ""));
+            if (val > max) max = val;
+          }
+        });
+        return max === 0 ? "Nothing" : "₹" + max;
       }
 
       function showResult(name, prize) {
@@ -353,13 +430,13 @@
         } else {
           document.getElementById("resultTitle").innerText = "Eid Mubarak 🎉";
           document.getElementById("message").innerText =
-            `Congratulations ${name}!`;
+            `${name}, your spin result 🎁`;
           launchConfetti();
         }
       }
 
       function launchConfetti() {
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 60; i++) {
           const div = document.createElement("div");
           div.className = "confetti";
           div.style.left = Math.random() * 100 + "vw";
@@ -373,7 +450,7 @@
       }
 
       function launchSad() {
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 30; i++) {
           const div = document.createElement("div");
           div.className = "sad";
           div.innerText = "😢";
