@@ -341,6 +341,14 @@
       }
       drawWheel();
 
+       // Prefill name from URL
+  const params = new URLSearchParams(window.location.search);
+  const prefilledName = params.get("name");
+
+  if (prefilledName) {
+    document.getElementById("username").value = decodeURIComponent(prefilledName);
+  }
+
       window.onload = () => {
         updateHistory();
         if (spinCount >= 3) {
